@@ -1,0 +1,3 @@
+data/instances/cvrp/A/A-n32-k5.vrp 5
+data/instances/cvrp/A/A-n33-k5.vrp 5
+data/instances/cvrp/A/A-n36-k5.vrp 5
