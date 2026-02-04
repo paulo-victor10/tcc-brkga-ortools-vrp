@@ -1,3 +1,4 @@
+#include <memory>
 #include <cctype>
 #include <cstdint>
 #include <cmath>
@@ -143,22 +144,41 @@ int main(int argc, char** argv) {
   RoutingSearchParameters search_parameters =
       operations_research::DefaultRoutingSearchParameters();
 
-  search_parameters.set_first_solution_strategy(
-      operations_research::FirstSolutionStrategy::PATH_CHEAPEST_ARC);
-
   search_parameters.set_local_search_metaheuristic(
-      operations_research::LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
+    operations_research::LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
+
+  search_parameters.set_use_unfiltered_first_solution_strategy(true);
+  search_parameters.set_use_full_propagation(true);
+  search_parameters.set_log_search(true);
 
   int time_limit_s = 2;
   if (argc >= 4) time_limit_s = std::stoi(argv[3]);
   search_parameters.mutable_time_limit()->set_seconds(time_limit_s);
 
+  routing.CloseModel();
 
-  const Assignment* solution = routing.SolveWithParameters(search_parameters);
+  std::vector<operations_research::FirstSolutionStrategy::Value> strategies = {
+      operations_research::FirstSolutionStrategy::SAVINGS,
+      operations_research::FirstSolutionStrategy::PARALLEL_CHEAPEST_INSERTION,
+      operations_research::FirstSolutionStrategy::SEQUENTIAL_CHEAPEST_INSERTION,
+      operations_research::FirstSolutionStrategy::CHRISTOFIDES,
+      operations_research::FirstSolutionStrategy::GLOBAL_CHEAPEST_ARC,
+      operations_research::FirstSolutionStrategy::PATH_CHEAPEST_ARC,
+      operations_research::FirstSolutionStrategy::LOCAL_CHEAPEST_INSERTION
+  };
+
+  const Assignment* solution = nullptr;
+  for (const auto s : strategies) {
+    search_parameters.set_first_solution_strategy(s);
+    solution = routing.SolveWithParameters(search_parameters);
+    if (solution) break;
+  }
+
   if (!solution) {
     std::cout << "No solution found.\n";
     return 1;
   }
+
 
   int64_t total_cost = 0;
   for (int v = 0; v < num_vehicles; ++v) {

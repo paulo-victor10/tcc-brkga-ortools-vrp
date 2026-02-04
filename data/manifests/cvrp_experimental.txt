@@ -1,0 +1,28 @@
+# Baseline clássico – Augerat (A/B)
+
+data/instances/cvrp/A/A-n32-k5.vrp 5
+data/instances/cvrp/A/A-n33-k6.vrp 6
+data/instances/cvrp/A/A-n36-k5.vrp 5
+data/instances/cvrp/A/A-n39-k5.vrp 5
+data/instances/cvrp/A/A-n44-k6.vrp 6
+
+data/instances/cvrp/B/B-n50-k7.vrp 7
+
+# Augerat (P) testar robustez do método e avaliar desempenho em relações extremas entre número de clientes e veículos.
+
+data/instances/cvrp/P/P-n16-k8.vrp 8
+data/instances/cvrp/P/P-n22-k2.vrp 2
+data/instances/cvrp/P/P-n45-k5.vrp 5
+data/instances/cvrp/P/P-n50-k10.vrp 10
+
+# Estas instâncias apresentam estruturas de demanda e capacidade distintas das instâncias de Augerat, sendo utilizadas como grupo complementar:
+
+data/instances/cvrp/E/E-n30-k3.vrp 3
+data/instances/cvrp/E/E-n33-k4.vrp 4
+
+# Hard cases: criar cenários de alta complexidade, forçar ambos os métodos a atingirem o limite de tempo, comparar qualidade da solução final quando o tempo não diferencia os métodos.
+
+# data/instances/cvrp/X/X-n101-k25.vrp 25
+# data/instances/cvrp/X/X-n106-k14.vrp 14
+# data/instances/cvrp/X/X-n120-k6.vrp 6
+# data/instances/cvrp/X/X-n134-k13.vrp 13
