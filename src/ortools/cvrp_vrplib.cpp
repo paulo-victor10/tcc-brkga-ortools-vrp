@@ -1,12 +1,14 @@
-#include <memory>
 #include <cctype>
 #include <cstdint>
 #include <cmath>
+#include <functional>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "ortools/constraint_solver/constraint_solver.h"
 #include "ortools/constraint_solver/routing.h"
 #include "ortools/constraint_solver/routing_index_manager.h"
 #include "ortools/constraint_solver/routing_parameters.h"
@@ -113,6 +115,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+  int time_limit_s = 2;
+  if (argc >= 4) time_limit_s = std::stoi(argv[3]);
+
   const auto distance_matrix = BuildDistanceMatrix(inst);
 
   RoutingIndexManager manager(inst.dimension, num_vehicles,
@@ -144,41 +149,34 @@ int main(int argc, char** argv) {
   RoutingSearchParameters search_parameters =
       operations_research::DefaultRoutingSearchParameters();
 
+  search_parameters.set_first_solution_strategy(
+      operations_research::FirstSolutionStrategy::PARALLEL_CHEAPEST_INSERTION);
+
   search_parameters.set_local_search_metaheuristic(
-    operations_research::LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
+      operations_research::LocalSearchMetaheuristic::GUIDED_LOCAL_SEARCH);
 
   search_parameters.set_use_unfiltered_first_solution_strategy(true);
   search_parameters.set_use_full_propagation(true);
-  search_parameters.set_log_search(true);
-
-  int time_limit_s = 2;
-  if (argc >= 4) time_limit_s = std::stoi(argv[3]);
+  search_parameters.set_log_search(false);
   search_parameters.mutable_time_limit()->set_seconds(time_limit_s);
 
-  routing.CloseModel();
+  int64_t best_cost = std::numeric_limits<int64_t>::max();
+  int64_t best_time_ms = -1;
 
-  std::vector<operations_research::FirstSolutionStrategy::Value> strategies = {
-      operations_research::FirstSolutionStrategy::SAVINGS,
-      operations_research::FirstSolutionStrategy::PARALLEL_CHEAPEST_INSERTION,
-      operations_research::FirstSolutionStrategy::SEQUENTIAL_CHEAPEST_INSERTION,
-      operations_research::FirstSolutionStrategy::CHRISTOFIDES,
-      operations_research::FirstSolutionStrategy::GLOBAL_CHEAPEST_ARC,
-      operations_research::FirstSolutionStrategy::PATH_CHEAPEST_ARC,
-      operations_research::FirstSolutionStrategy::LOCAL_CHEAPEST_INSERTION
-  };
+  routing.AddAtSolutionCallback([&]() {
+    const int64_t current_cost = routing.CostVar()->Value();
+    if (current_cost < best_cost) {
+      best_cost = current_cost;
+      best_time_ms = routing.solver()->wall_time();
+    }
+  });
 
-  const Assignment* solution = nullptr;
-  for (const auto s : strategies) {
-    search_parameters.set_first_solution_strategy(s);
-    solution = routing.SolveWithParameters(search_parameters);
-    if (solution) break;
-  }
+  const Assignment* solution = routing.SolveWithParameters(search_parameters);
 
   if (!solution) {
     std::cout << "No solution found.\n";
     return 1;
   }
-
 
   int64_t total_cost = 0;
   for (int v = 0; v < num_vehicles; ++v) {
@@ -189,6 +187,9 @@ int main(int argc, char** argv) {
       index = next;
     }
   }
+
+  std::cout << "Best distance (during search): " << best_cost << "\n";
+  std::cout << "Best found at: " << best_time_ms << "ms\n\n";
 
   PrintSolution(inst, num_vehicles, manager, routing, *solution, total_cost);
   return 0;

@@ -8,6 +8,8 @@ RE_INSTANCE = re.compile(
 )
 RE_TOTAL_DISTANCE = re.compile(r"Total distance:\s*(\d+)")
 RE_SOLVED_MS = re.compile(r"Solved in\s*(\d+)\s*ms")
+RE_BEST_DISTANCE = re.compile(r"Best distance \(during search\):\s*(\d+)")
+RE_BEST_TIME = re.compile(r"Best found at:\s*(-?\d+)\s*ms")
 
 def parse_time_limit_from_filename(filename: str) -> int:
     m = re.search(r"_t(\d+)\.log$", filename)
@@ -31,6 +33,12 @@ def parse_log(path: str) -> dict:
     total_distance = int(m2.group(1))
     solved_ms = int(m3.group(1))
 
+    m_best_cost = RE_BEST_DISTANCE.search(text)
+    m_best_time = RE_BEST_TIME.search(text)
+
+    best_cost = int(m_best_cost.group(1)) if m_best_cost else total_distance
+    best_time_ms = int(m_best_time.group(1)) if m_best_time else solved_ms
+
     filename = os.path.basename(path)
     time_limit_s = parse_time_limit_from_filename(filename)
     instance = filename.replace(f"_t{time_limit_s}.log", "") if time_limit_s >= 0 else os.path.splitext(filename)[0]
@@ -44,6 +52,8 @@ def parse_log(path: str) -> dict:
         "time_limit_s": time_limit_s,
         "total_distance": total_distance,
         "solved_ms": solved_ms,
+        "best_cost": best_cost,
+        "best_time_ms": best_time_ms,
         "log_file": filename,
     }
 
@@ -69,7 +79,20 @@ def main() -> int:
         print("ERROR: no parsed rows; check logs directory.", file=sys.stderr)
         return 3
 
-    fieldnames = ["instance", "n_nodes", "capacity", "vehicles", "depot", "time_limit_s", "total_distance", "solved_ms", "log_file"]
+    fieldnames = [
+        "instance",
+        "n_nodes",
+        "capacity",
+        "vehicles",
+        "depot",
+        "time_limit_s",
+        "total_distance",
+        "solved_ms",
+        "best_cost",
+        "best_time_ms",
+        "log_file",
+    ]
+
     os.makedirs(os.path.dirname(out_csv), exist_ok=True)
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)

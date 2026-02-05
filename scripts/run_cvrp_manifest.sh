@@ -38,8 +38,8 @@ while IFS= read -r line; do
   echo "Running $base (vehicles=$vehicles, time_limit=${TIME_LIMIT}s)"
   run_count=$((run_count+1))
 
-  if ! ./build-linux/cvrp_vrplib "$inst" "$vehicles" "$TIME_LIMIT" \
-      | tee "results/cvrp/${base}_t${TIME_LIMIT}.log"; then
+  log="results/cvrp/${base}_t${TIME_LIMIT}.log"
+  if ! ./build-linux/cvrp_vrplib "$inst" "$vehicles" "$TIME_LIMIT" >"$log" 2>&1; then
     echo "FAILED: $base"
     echo "$inst" >> "$failed_log"
     fail_count=$((fail_count+1))

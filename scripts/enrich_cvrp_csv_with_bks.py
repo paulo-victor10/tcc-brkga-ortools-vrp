@@ -22,54 +22,47 @@ def read_bks_cost(sol_path: str) -> int | None:
         return None
 
 def main() -> int:
-    in_csv = sys.argv[1] if len(sys.argv) >= 2 else "results/cvrp/summary_t2.csv"
-    out_csv = sys.argv[2] if len(sys.argv) >= 3 else "results/cvrp/summary_t2_with_bks.csv"
-    instances_root = sys.argv[3] if len(sys.argv) >= 4 else "data/instances/cvrp"
-
-    if not os.path.isfile(in_csv):
-        print(f"ERROR: input CSV not found: {in_csv}", file=sys.stderr)
-        return 2
-    if not os.path.isdir(instances_root):
-        print(f"ERROR: instances_root not found: {instances_root}", file=sys.stderr)
-        return 3
+    in_csv = sys.argv[1]
+    out_csv = sys.argv[2]
+    instances_root = sys.argv[3]
 
     with open(in_csv, "r", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
-
-    if not rows:
-        print("ERROR: input CSV has no rows.", file=sys.stderr)
-        return 4
 
     missing = 0
     no_cost = 0
 
     for r in rows:
-        instance = r.get("instance", "").strip()
-        bks = None
+        instance = r["instance"]
         sol_path = find_sol_file(instances_root, instance)
-        if sol_path:
-            bks = read_bks_cost(sol_path)
-            if bks is None:
-                no_cost += 1
-        else:
+        bks = read_bks_cost(sol_path) if sol_path else None
+
+        if sol_path is None:
             missing += 1
+        elif bks is None:
+            no_cost += 1
 
         r["bks_cost"] = "" if bks is None else str(bks)
 
-        gap = ""
         try:
-            td = int(r.get("total_distance", ""))
-            if bks is not None and bks > 0:
-                gap = f"{((td - bks) / bks) * 100.0:.2f}"
+            final_cost = int(r["total_distance"])
+            best_cost = int(r.get("best_cost", final_cost))
         except Exception:
-            gap = ""
-        r["gap_pct"] = gap
+            r["gap_final_pct"] = ""
+            r["gap_best_pct"] = ""
+            continue
+
+        if bks and bks > 0:
+            r["gap_final_pct"] = f"{((final_cost - bks) / bks) * 100.0:.2f}"
+            r["gap_best_pct"] = f"{((best_cost - bks) / bks) * 100.0:.2f}"
+        else:
+            r["gap_final_pct"] = ""
+            r["gap_best_pct"] = ""
 
     fieldnames = list(rows[0].keys())
-    if "bks_cost" not in fieldnames:
-        fieldnames.append("bks_cost")
-    if "gap_pct" not in fieldnames:
-        fieldnames.append("gap_pct")
+    for c in ["bks_cost", "gap_final_pct", "gap_best_pct"]:
+        if c not in fieldnames:
+            fieldnames.append(c)
 
     os.makedirs(os.path.dirname(out_csv), exist_ok=True)
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
