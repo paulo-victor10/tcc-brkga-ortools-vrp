@@ -222,7 +222,7 @@ O fallback automático entre estratégias de solução inicial foi desativado. E
 - resultados consistentes;
 - base **100% reprodutível**.
 
-### ⏭ Próxima fase natural
+### ⏭ O que fazer em seguida:
 
 1. Consolidar este marco no TCC
 2. Replicar pipeline para **VRPTW (Homberger)**
