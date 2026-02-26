@@ -176,7 +176,7 @@ Para cada instância:
 | `bks_cost` | melhor custo conhecido |
 | `gap_pct` | gap percentual em relação ao BKS |
 
-⚠️ **Não** coletamos:
+⚠️ **Não** é coletado no momento:
 - melhor custo intermediário;
 - tempo de melhora;
 - curva tempo × qualidade.
