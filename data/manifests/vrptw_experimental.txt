@@ -1,0 +1,5 @@
+# bug
+
+data/instances/vrptw/C101.txt 25
+data/instances/vrptw/R101.txt 25
+data/instances/vrptw/RC101.txt 25
