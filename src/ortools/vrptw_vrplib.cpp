@@ -31,7 +31,8 @@ int main(int argc,char** argv){
 
   auto inst=LoadVRPLIB_VRPTW(instance_path);
 
-  RoutingIndexManager manager(inst.dimension,vehicles,inst.depot);
+  // CORREÇÃO 1: Conversão explícita para NodeIndex
+  RoutingIndexManager manager(inst.dimension, vehicles, RoutingIndexManager::NodeIndex(inst.depot));
   RoutingModel routing(manager);
 
   auto transit=routing.RegisterTransitCallback(
@@ -77,7 +78,8 @@ int main(int argc,char** argv){
 
   for(int i=0;i<inst.dimension;i++){
 
-    int64_t index=manager.NodeToIndex(i);
+    // CORREÇÃO 2: Conversão explícita para NodeIndex
+    int64_t index=manager.NodeToIndex(RoutingIndexManager::NodeIndex(i));
 
     time_dimension.CumulVar(index)->SetRange(
       inst.ready_time[i],
