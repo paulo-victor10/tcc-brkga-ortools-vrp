@@ -31,4 +31,6 @@ add_executable(vrptw_vrplib
     src/parsers/vrplib_vrptw.cpp
 )
 
-target_link_libraries(vrptw_vrplib ortools::ortools)
+target_include_directories(vrptw_vrplib PRIVATE src)
+
+target_link_libraries(vrptw_vrplib PRIVATE ortools::ortools)
