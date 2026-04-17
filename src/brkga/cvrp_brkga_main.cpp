@@ -6,10 +6,13 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <cmath>
+#include <string>
+#include <regex>
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Uso: " << argv[0] << " <caminho_instancia.vrp>\n";
+    if (argc < 3) {
+        std::cerr << "Uso: " << argv[0] << " <caminho_instancia.vrp> <tempo_limite_segundos>\n";
         return 1;
     }
 
@@ -47,23 +50,41 @@ int main(int argc, char* argv[]) {
 
     box::Brkga brkga(config);
 
-    unsigned maxGenerations = 1000;
+    double time_limit_s = std::stod(argv[2]);
     unsigned exchangeInterval = 25;
+    unsigned g = 1;
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    for (unsigned g = 1; g <= maxGenerations; ++g) {
+    while (true) {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = current_time - start_time;
+        
+        if (elapsed.count() >= time_limit_s) {
+            break;
+        }
+
         brkga.evolve();
         if (g % exchangeInterval == 0) {
             brkga.exchangeElites();
         }
+        g++;
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
 
-    std::cout << "Distance: " << brkga.getBestFitness() << "\n";
-    std::cout << "Time (ms): " << duration_ms << "\n";
+    std::string filename = argv[1];
+    int vehicles = 0;
+    std::smatch match;
+    if (std::regex_search(filename, match, std::regex("-k(\\d+)"))) {
+        vehicles = std::stoi(match[1].str());
+    }
+
+    std::cout << "Instance: " << problem.dimension << " nodes, capacity " << problem.capacity 
+              << ", vehicles " << vehicles << ", depot " << problem.depot << "\n";
+    std::cout << "Total distance: " << static_cast<int>(std::round(brkga.getBestFitness())) << "\n";
+    std::cout << "Solved in " << duration_ms << " ms\n";
 
     return 0;
 }

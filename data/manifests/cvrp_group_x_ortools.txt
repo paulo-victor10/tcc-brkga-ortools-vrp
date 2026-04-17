@@ -1,0 +1,8 @@
+# Hard cases: Grupo X (Uchoa et al.) - Escalabilidade com Folga de Frota
+data/instances/cvrp/X/X-n101-k25.vrp 40
+data/instances/cvrp/X/X-n106-k14.vrp 30
+data/instances/cvrp/X/X-n120-k6.vrp 15
+data/instances/cvrp/X/X-n134-k13.vrp 25
+data/instances/cvrp/X/X-n256-k16.vrp 30
+data/instances/cvrp/X/X-n548-k50.vrp 80
+data/instances/cvrp/X/X-n1001-k43.vrp 80

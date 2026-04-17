@@ -4,9 +4,11 @@ set -uo pipefail
 MANIFEST="${1:-data/manifests/cvrp_experimental.txt}"
 TIME_LIMIT="${2:-2}"
 
-mkdir -p results/cvrp
-missing_log="results/cvrp/_missing_files_t${TIME_LIMIT}.log"
-failed_log="results/cvrp/_failed_runs_t${TIME_LIMIT}.log"
+RESULTS_DIR="results/cvrp/runs/t${TIME_LIMIT}"
+mkdir -p "$RESULTS_DIR"
+
+missing_log="${RESULTS_DIR}/_missing_files.log"
+failed_log="${RESULTS_DIR}/_failed_runs.log"
 
 : > "$missing_log"
 : > "$failed_log"
@@ -14,7 +16,7 @@ failed_log="results/cvrp/_failed_runs_t${TIME_LIMIT}.log"
 fail_count=0
 run_count=0
 
-while IFS= read -r line; do
+while IFS= read -r line || [ -n "$line" ]; do
   line="${line//$'\r'/}"
   [[ -z "$line" ]] && continue
   [[ "$line" =~ ^# ]] && continue
@@ -38,7 +40,7 @@ while IFS= read -r line; do
   echo "Running $base (vehicles=$vehicles, time_limit=${TIME_LIMIT}s)"
   run_count=$((run_count+1))
 
-  log="results/cvrp/${base}_t${TIME_LIMIT}.log"
+  log="${RESULTS_DIR}/${base}_t${TIME_LIMIT}.log"
   if ! ./build-linux/cvrp_vrplib "$inst" "$vehicles" "$TIME_LIMIT" >"$log" 2>&1; then
     echo "FAILED: $base"
     echo "$inst" >> "$failed_log"
