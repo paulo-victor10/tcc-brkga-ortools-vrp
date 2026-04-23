@@ -85,6 +85,7 @@ int main(int argc, char* argv[]) {
               << ", vehicles " << vehicles << ", depot " << problem.depot << "\n";
     std::cout << "Total distance: " << static_cast<int>(std::round(brkga.getBestFitness())) << "\n";
     std::cout << "Solved in " << duration_ms << " ms\n";
+    std::cout << "Generations completed: " << g << "\n";
 
     return 0;
 }

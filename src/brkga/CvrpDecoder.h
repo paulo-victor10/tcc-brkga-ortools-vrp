@@ -12,6 +12,13 @@ private:
     float capacity;
     unsigned num_nodes;
 
+    // Matriz de Vizinhança para a Busca Granular
+    std::vector<std::vector<unsigned>> nearest_neighbors;
+
+    // Métodos Meméticos
+    void optimizeGranularInterRoute(std::vector<std::vector<unsigned>>& routes) const;
+    float optimizeRoute2Opt(std::vector<unsigned>& route) const;
+
 public:
     using box::Decoder::decode;
 
