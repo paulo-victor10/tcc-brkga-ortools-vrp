@@ -2,6 +2,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
+#include <random> // Biblioteca nativa de aleatoriedade
 
 CvrpDecoder::CvrpDecoder(const std::vector<std::pair<float, float>>& coords,
                          const std::vector<float>& customer_demands,
@@ -19,12 +20,10 @@ CvrpDecoder::CvrpDecoder(const std::vector<std::pair<float, float>>& coords,
         }
     }
 
-    // 1. PRÉ-COMPUTAÇÃO DA BUSCA GRANULAR (A Mágica da Velocidade)
-    // Para cada cliente, guardamos apenas os 15 mais próximos (ou menos, se a instância for pequena)
     unsigned K = std::min(15u, num_nodes - 1);
     nearest_neighbors.resize(num_nodes);
     
-    for (unsigned i = 1; i < num_nodes; ++i) { // Ignora o depósito
+    for (unsigned i = 1; i < num_nodes; ++i) { 
         std::vector<std::pair<float, unsigned>> dist_node;
         for (unsigned j = 1; j < num_nodes; ++j) {
             if (i != j) dist_node.push_back({distances[i * num_nodes + j], j});
@@ -36,9 +35,7 @@ CvrpDecoder::CvrpDecoder(const std::vector<std::pair<float, float>>& coords,
     }
 }
 
-// 2. BUSCA LOCAL INTER-ROTAS GRANULAR
 void CvrpDecoder::optimizeGranularInterRoute(std::vector<std::vector<unsigned>>& routes) const {
-    // Vetores O(1) para saber em qual caminhão e em qual posição cada cliente está instantaneamente
     std::vector<int> node_to_route(num_nodes, -1);
     std::vector<int> node_to_pos(num_nodes, -1);
     std::vector<float> route_loads(routes.size(), 0.0f);
@@ -66,31 +63,26 @@ void CvrpDecoder::optimizeGranularInterRoute(std::vector<std::vector<unsigned>>&
                                 - distances[prev_u * num_nodes + u] 
                                 - distances[u * num_nodes + next_u];
 
-                // O SEGREDO: Em vez de testar a cidade toda, testa apenas inserir ao lado dos 15 vizinhos!
                 for (unsigned v : nearest_neighbors[u]) {
                     int r2 = node_to_route[v];
-                    if (r2 == -1 || r2 == r1) continue; // Se o vizinho está na mesma rota, ignora
+                    if (r2 == -1 || r2 == r1) continue; 
 
-                    if (route_loads[r2] + demands[u] > capacity) continue; // Quebra capacidade, ignora
+                    if (route_loads[r2] + demands[u] > capacity) continue; 
 
-                    int j = node_to_pos[v]; // Posição do vizinho 'v' no outro caminhão
+                    int j = node_to_pos[v]; 
                     
-                    // Tenta colocar 'u' LOGO APÓS 'v'
                     unsigned next_v = routes[r2][j+1];
                     float delta_add = distances[v * num_nodes + u] 
                                     + distances[u * num_nodes + next_v] 
                                     - distances[v * num_nodes + next_v];
 
                     if (delta_rem + delta_add < -1e-4f) {
-                        // Melhora encontrada! Aplica a troca
                         routes[r2].insert(routes[r2].begin() + j + 1, u);
                         routes[r1].erase(routes[r1].begin() + i);
 
-                        // Atualiza as cargas para o próximo teste
                         route_loads[r1] -= demands[u];
                         route_loads[r2] += demands[u];
 
-                        // Reconstrói o mapa de índices apenas para essas duas rotas (Milisegundos)
                         for (size_t p = 1; p < routes[r1].size() - 1; ++p) {
                             node_to_route[routes[r1][p]] = r1; node_to_pos[routes[r1][p]] = p;
                         }
@@ -108,12 +100,10 @@ void CvrpDecoder::optimizeGranularInterRoute(std::vector<std::vector<unsigned>>&
         }
     }
 
-    // Limpa caminhões vazios
     routes.erase(std::remove_if(routes.begin(), routes.end(),
         [](const std::vector<unsigned>& r) { return r.size() <= 2; }), routes.end());
 }
 
-// 3. BUSCA LOCAL INTRA-ROTA (2-opt Clássico)
 float CvrpDecoder::optimizeRoute2Opt(std::vector<unsigned>& route) const {
     if (route.size() <= 3) {
         float cost = 0.0f;
@@ -200,14 +190,22 @@ box::Fitness CvrpDecoder::decode(const box::Chromosome<box::GeneIndex>& tour) co
         curr = prev;
     }
 
-    // FASE 2: POLIMENTO MEMÉTICO GRANULAR E 2-OPT
+    // FASE 2: O PONTO DE EQUILÍBRIO (0,5% de Busca Granular)
     
-    // Como a Granularidade é MUITO rápida, podemos rodar 100% das vezes sem medo de asfixiar a CPU
-    optimizeGranularInterRoute(routes); 
+    // Aleatoriedade isolada por thread (Thread-safe) para não causar gargalo no OpenMP
+    thread_local std::mt19937 rng(std::random_device{}());
     
+    // Roleta de 0 a 999. Para termos 0,5%, o número sorteado deve ser menor que 5.
+    std::uniform_int_distribution<int> dist(0, 999);
+
+    if (dist(rng) < 5) {
+        optimizeGranularInterRoute(routes); // A Busca Pesada Cruza-Caminhões
+    }
+    
+    // O polimento de rua (2-opt) roda para 100% dos indivíduos, pois é quase instantâneo
     float total_fitness = 0.0f;
     for (auto& route : routes) {
-        total_fitness += optimizeRoute2Opt(route);
+        total_fitness += optimizeRoute2Opt(route); 
     }
 
     return total_fitness;

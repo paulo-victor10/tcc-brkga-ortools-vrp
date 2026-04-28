@@ -1,0 +1,10 @@
+nug12.dat
+tai12a.dat
+nug15.dat
+tai15a.dat
+nug20.dat
+tai20a.dat
+nug25.dat
+tai25a.dat
+nug30.dat
+tai30a.dat

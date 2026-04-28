@@ -1,0 +1,17 @@
+nug12.dat
+tai12a.dat
+chr12a.dat
+rou12.dat
+nug15.dat
+tai15a.dat
+chr15a.dat
+rou15.dat
+nug17.dat
+nug20.dat
+tai20a.dat
+chr20a.dat
+rou20.dat
+nug22.dat
+nug24.dat
+nug25.dat
+tai25a.dat

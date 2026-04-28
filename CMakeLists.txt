@@ -44,3 +44,32 @@ target_include_directories(cvrp_brkga PRIVATE src ${CMAKE_CURRENT_SOURCE_DIR}/br
 set_property(TARGET cvrp_brkga PROPERTY CUDA_ARCHITECTURES 61)
 
 target_link_libraries(cvrp_brkga PRIVATE brkga-cuda)
+
+# --- Configuração do PoC QAP com OR-Tools ---
+
+# Define o executável e aponta para o arquivo que criamos
+add_executable(ortools_qap_poc src/qap/ortools_qap_poc.cpp)
+
+# Linka as bibliotecas do OR-Tools (CP-SAT)
+target_link_libraries(ortools_qap_poc PRIVATE ortools::ortools)
+
+# --- Configuração do BRKGA QAP ---
+
+# Adiciona o executável do BRKGA QAP
+add_executable(brkga_qap 
+    src/qap/brkga_qap_main.cpp 
+    src/qap/QapDecoder.cpp
+)
+
+# Diz ao compilador onde encontrar os arquivos .hpp do brkga-cuda
+target_include_directories(brkga_qap PRIVATE 
+    src 
+    ${CMAKE_SOURCE_DIR} 
+    ${CMAKE_SOURCE_DIR}/brkga-cuda/src
+)
+
+# Exigência do CMake para alvos CUDA: define a arquitetura da placa de vídeo
+set_property(TARGET brkga_qap PROPERTY CUDA_ARCHITECTURES 61)
+
+# Linka com a biblioteca brkga-cuda compilada pela GPU
+target_link_libraries(brkga_qap PRIVATE brkga-cuda)

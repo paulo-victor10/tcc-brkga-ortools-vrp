@@ -1,0 +1,7 @@
+nug15.dat
+nug17.dat
+nug20.dat
+nug22.dat
+nug25.dat
+nug28.dat
+nug30.dat
